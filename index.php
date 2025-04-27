@@ -266,7 +266,7 @@ try {
                         <a class="nav-link" href="#dictionary-section"><i class="fas fa-book me-1"></i> Cadastrados</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="api.html"><i class="fas fa-book me-1"></i> API Dicionário</a>
+                        <a class="nav-link" href="api.html"><i class="fas fa-book me-1"></i>Dicionário API</a>
                     </li>
                 </ul>
             </div>

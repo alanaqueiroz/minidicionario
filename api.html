@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Minidicionário</title>
+    <title>Dicionário API</title>
     <style>
         body {
             margin: 0;
@@ -41,7 +41,7 @@
         }
         .search-btn {
             height:53px;
-            width:300px;
+            width:390px;
             background-color: rgba(0,0,0,.6);
             color: white;
             border: none;
@@ -70,11 +70,10 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="heading">Minidicionário</h1>
+        <h1 class="heading">Dicionario API</h1>
         <input placeholder="Digite uma palavra para consultar" type="text" class="input" id="input" />
         <button class="search-btn" id="search-btn">Pesquisar</button>
-        <p class="info-text" id="info-text">Digite uma palavra e pressione Enter</p>
-        <p class="instructions">Obs: A pronúncia em áudio é somente para palavras em inglês</p>
+        <p class="instructions">Obs: Não são todas as palavras que possuem áudio de pronúncia em inglês</p>
         <div class="meaning-container" id="meaning-container">
             <p>Palavra: <span class="title" id="title">____</span> <span class="translation" id="translation"></span></p>
             <p>Significado: <span class="meaning" id="meaning">____</span></p>
