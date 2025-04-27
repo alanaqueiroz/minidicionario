@@ -1,218 +1,416 @@
+<?php
+$host = 'localhost';
+$dbname = 'minidicionario';
+$username = 'root';
+$password = '';
+
+$palavras = [];
+
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    die("Erro na conexão: " . $e->getMessage());
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inserir'])) {
+    $palavra = $_POST['palavra'];
+    $disciplina = $_POST['disciplina'];
+    $conceito = $_POST['conceito'];
+    
+    try {
+        $stmt = $conn->prepare("INSERT INTO palavras (palavra, disciplina, conceito) 
+                               VALUES (:palavra, :disciplina, :conceito)");
+        $stmt->bindParam(':palavra', $palavra);
+        $stmt->bindParam(':disciplina', $disciplina);
+        $stmt->bindParam(':conceito', $conceito);
+        $stmt->execute();
+        
+        echo "<div class='alert alert-success'>Palavra inserida com sucesso!</div>";
+    } catch(PDOException $e) {
+        echo "<div class='alert alert-danger'>Erro ao inserir: " . $e->getMessage() . "</div>";
+    }
+}
+
+$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
+
+try {
+    if (!empty($searchTerm)) {
+        $stmt = $conn->prepare("SELECT * FROM palavras 
+                               WHERE palavra LIKE :search OR conceito LIKE :search
+                               ORDER BY disciplina, palavra");
+        $searchParam = "%$searchTerm%";
+        $stmt->bindParam(':search', $searchParam);
+        $stmt->execute();
+        $palavras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $stmt = $conn->query("SELECT * FROM palavras ORDER BY disciplina, palavra");
+        $palavras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch(PDOException $e) {
+    echo "<div class='alert alert-danger'>Erro ao buscar palavras: " . $e->getMessage() . "</div>";
+    $palavras = [];
+}
+?>
+
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Minidicionário</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniDicionário</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4bb543;
+            --danger-color: #ff3333;
+            --warning-color: #ffcc00;
+        }
+        
         body {
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-            justify-content: center; 
-            align-items: center;
-            background-color: rgb(37, 37, 37);
-            font-family: 'Courier New', Courier, monospace;
+            background-color: #f5f7ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark-color);
+            line-height: 1.6;
         }
-        .container {
-            background-color: rgba(255,255,255,.3);
-            padding: 28px;
-            border-radius: 7px;
-            box-shadow: 0 10px 10px rgba(0,0,0,.3);
-            width: 90%;
-            margin:10px;
-            max-width: 450px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 500;
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
         }
-        .heading {
-            font-size:28px;
+        
+        .navbar-brand span {
+            color: var(--accent-color);
         }
-        .input {
-            height:53px;
-            width:300px;
-            background-color: rgba(255,255,255,.6);
-            border-color:rgba(255,255,255,.4);
-            font-size: 16px;
-            padding: 0 42px;
-            border-radius:5px;
-            margin-bottom: 10px;
+        
+        .form-container, .dictionary-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .search-btn {
-            height:53px;
-            width:300px;
-            background-color: rgba(0,0,0,.6);
+        
+        .disciplina-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
+            padding: 12px 20px;
+            margin: 30px 0 15px 0;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .disciplina-header i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .card {
             border: none;
-            font-size: 16px;
-            border-radius:5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
         }
-        .search-btn:hover {
-            background-color: rgba(0,0,0,.8);
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
-        .meaning-container {
-            display:none;
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 2px solid var(--accent-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .instructions {
-            font-size: 14px;
-            margin-top: 10px;
-            color: #333;
+        
+        .card-body {
+            padding: 20px;
         }
-        .translation {
-            font-size: 16px;
-            color: #555;
-            font-style: italic;
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.25rem rgba(76, 201, 240, 0.25);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            padding: 15px 20px;
+        }
+        
+        .highlight {
+            background-color: #fffacd;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(67, 97, 238, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-5px) scale(1.05);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container, .dictionary-container {
+                padding: 1.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand" style="color: inherit; text-decoration: none; cursor: default;">
+                <i class="fas fa-book-open me-2"></i>Mini<span>Dicionário</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#insert-section"><i class="fas fa-plus-circle me-1"></i> Inserir</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dictionary-section"><i class="fas fa-book me-1"></i> Cadastrados</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api.html"><i class="fas fa-book me-1"></i> API Dicionário</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
-        <h1 class="heading">Minidicionário</h1>
-        <input placeholder="Digite uma palavra para consultar" type="text" class="input" id="input" />
-        <button class="search-btn" id="search-btn">Pesquisar</button>
-        <p class="info-text" id="info-text">Digite uma palavra e pressione Enter</p>
-        <p class="instructions">Obs: A pronúncia em áudio é somente para palavras em inglês</p>
-        <div class="meaning-container" id="meaning-container">
-            <p>Palavra: <span class="title" id="title">____</span> <span class="translation" id="translation"></span></p>
-            <p>Significado: <span class="meaning" id="meaning">____</span></p>
-            <audio src="" controls id="audio" style="display:none;"></audio>
+        <div class="form-container" id="insert-section">
+            <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>Inserir</h2>
+
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="palavra" class="form-label">Palavra</label>
+                        <input type="text" class="form-control" id="palavra" name="palavra" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="disciplina" class="form-label">Disciplina</label>
+                        <select class="form-select" id="disciplina" name="disciplina" required>
+                            <option value="">Selecione uma disciplina...</option>
+                            <option value="Estrutura de Dados">Estrutura de Dados</option>
+                            <option value="Estatística">Estatística</option>
+                            <option value="Fundamentos de Redes">Fundamentos de Redes</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="conceito" class="form-label">Conceito</label>
+                    <textarea class="form-control" id="conceito" name="conceito" rows="4" required></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" name="inserir" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="dictionary-container" id="dictionary-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0"><i class="fas fa-book me-2"></i>Cadastrados</h2>
+                <span class="badge bg-primary rounded-pill"><?php echo count($palavras); ?> termos</span>
+            </div>
+            
+            <form method="GET" class="mb-4">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Digite palavra, conceito ou disciplina..." 
+                           value="<?php echo htmlspecialchars($searchTerm); ?>">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search me-1"></i> Buscar
+                    </button>
+                    <?php if (!empty($searchTerm)): ?>
+                        <a href="?" class="btn btn-outline-danger ms-2">
+                            <i class="fas fa-times me-1"></i> Limpar
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </form>
+            
+            <?php if (!empty($searchTerm)): ?>
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i> Resultados para: <strong><?php echo htmlspecialchars($searchTerm); ?></strong>
+                </div>
+            <?php endif; ?>
+            
+            <?php
+            function highlightText($text, $searchTerm) {
+                if (empty($searchTerm)) return $text;
+                return preg_replace("/(" . preg_quote($searchTerm) . ")/i", "<span class='highlight'>$1</span>", $text);
+            }
+
+            $palavras_por_disciplina = [];
+            foreach ($palavras as $palavra) {
+                $disciplina = $palavra['disciplina'];
+                if (!isset($palavras_por_disciplina[$disciplina])) {
+                    $palavras_por_disciplina[$disciplina] = [];
+                }
+                $palavras_por_disciplina[$disciplina][] = $palavra;
+            }
+            
+            if (!empty($palavras_por_disciplina)) {
+                foreach ($palavras_por_disciplina as $disciplina => $palavras_disciplina) {
+                    $icon = '';
+                    switch ($disciplina) {
+                        case 'Estrutura de Dados':
+                            $icon = 'fas fa-code';
+                            break;
+                        case 'Estatística':
+                            $icon = 'fas fa-chart-bar';
+                            break;
+                        case 'Fundamentos de Redes':
+                            $icon = 'fas fa-network-wired';
+                            break;
+                        default:
+                            $icon = 'fas fa-book';
+                    }
+                    
+                    echo "<div class='disciplina-header'><i class='$icon'></i>$disciplina</div>";
+                    
+                    foreach ($palavras_disciplina as $palavra) {
+                        $palavraHighlighted = highlightText($palavra['palavra'], $searchTerm);
+                        $conceitoHighlighted = highlightText($palavra['conceito'], $searchTerm);
+                        
+                        echo "<div class='card'>";
+                        echo "<div class='card-header'>";
+                        echo "<span>{$palavraHighlighted}</span>";
+                        echo "<span class='badge bg-light text-primary'>{$palavra['disciplina']}</span>";
+                        echo "</div>";
+                        echo "<div class='card-body'>";
+                        echo "<p class='card-text'>{$conceitoHighlighted}</p>";
+                        echo "</div></div>";
+                    }
+                }
+            } elseif (empty($palavras)) {
+                echo '<div class="empty-state">';
+                echo '<i class="fas fa-book-open"></i>';
+                echo '<h3 class="mt-3">Nenhum termo cadastrado</h3>';
+                echo '<p class="text-muted">Comece adicionando novos termos ao dicionário</p>';
+                echo '</div>';
+            } elseif (!empty($searchTerm) && count($palavras) === 0) {
+                echo '<div class="empty-state">';
+                echo '<i class="fas fa-search"></i>';
+                echo '<h3 class="mt-3">Nenhum resultado encontrado</h3>';
+                echo '<p class="text-muted">Tente ajustar sua busca ou verifique a ortografia</p>';
+                echo '</div>';
+            }
+            ?>
         </div>
     </div>
-    
+
+    <a href="#insert-section" class="floating-btn" style="border: none; text-decoration: none;">
+        <i class="fas fa-plus"></i>
+    </a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Elementos DOM
-            const elements = {
-                input: document.getElementById("input"),
-                infoText: document.getElementById("info-text"),
-                meaningContainer: document.getElementById("meaning-container"),
-                title: document.getElementById("title"),
-                meaning: document.getElementById("meaning"),
-                audio: document.getElementById("audio"),
-                translation: document.getElementById("translation"),
-                searchBtn: document.getElementById("search-btn")
-            };
-
-            // Funções utilitárias
-            const utils = {
-                removeHTMLTags: text => text.replace(/<[^>]*>?/gm, ''),
-                
-                isEnglish: word => {
-                    if (/[ãõâêîôûáéíóúàèìòùç]/i.test(word)) return false;
-                    return /^[a-zA-Z\-']+$/.test(word);
-                }
-            };
-
-            // Serviço de tradução
-            const translationService = {
-                translate: async (text, sourceLang, targetLang) => {
-                    try {
-                        const response = await fetch(
-                            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
-                        );
-                        const data = await response.json();
-                        return utils.removeHTMLTags(data.responseData.translatedText || text);
-                    } catch (error) {
-                        console.error("Translation error:", error);
-                        return text;
-                    }
-                }
-            };
-
-            // Serviço de dicionário
-            const dictionaryService = {
-                fetchDefinition: async word => {
-                    try {
-                        const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`;
-                        const response = await fetch(url);
-                        return await response.json();
-                    } catch (error) {
-                        throw new Error("Erro ao buscar definição");
-                    }
-                }
-            };
-
-            // Controlador principal
-            const appController = {
-                showLoading: word => {
-                    elements.infoText.style.display = "block";
-                    elements.meaningContainer.style.display = "none";
-                    elements.infoText.innerText = `Buscando o significado de "${word}"...`;
-                    elements.translation.innerText = "";
-                },
-                
-                showError: message => {
-                    elements.infoText.innerText = message;
-                },
-                
-                showNotFound: word => {
-                    elements.meaningContainer.style.display = "block";
-                    elements.infoText.style.display = "none";
-                    elements.title.innerText = word;
-                    elements.meaning.innerText = "Palavra não encontrada";
-                    elements.audio.style.display = "none";
-                },
-                
-                showResult: (word, definition, isEnglish, audioUrl) => {
-                    elements.infoText.style.display = "none";
-                    elements.meaningContainer.style.display = "block";
-                    elements.title.innerText = word;
-                    elements.meaning.innerText = definition;
-                    
-                    if (isEnglish && audioUrl) {
-                        elements.audio.src = audioUrl;
-                        elements.audio.style.display = "inline-flex";
-                    } else {
-                        elements.audio.style.display = "none";
-                    }
-                },
-                
-                handleSearch: async word => {
-                    try {
-                        appController.showLoading(word);
-                        
-                        const isEng = utils.isEnglish(word);
-                        let searchWord = word;
-                        
-                        if (isEng) {
-                            const translated = await translationService.translate(word, 'en', 'pt');
-                            elements.translation.innerText = `(${translated})`;
-                        } else {
-                            searchWord = await translationService.translate(word, 'pt', 'en');
-                        }
-                        
-                        const result = await dictionaryService.fetchDefinition(searchWord);
-
-                        if (result.title) {
-                            appController.showNotFound(word);
-                        } else {
-                            const definition = result[0].meanings[0].definitions[0].definition;
-                            const translatedDefinition = await translationService.translate(definition, 'en', 'pt');
-                            const audioUrl = result[0].phonetics?.[0]?.audio;
-                            
-                            appController.showResult(word, translatedDefinition, isEng, audioUrl);
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        appController.showError("Ocorreu um erro. Tente novamente mais tarde.");
-                    }
-                }
-            };
-
-            // Event listeners
-            elements.input.addEventListener("keyup", e => {
-                if (e.target.value && e.key === "Enter") {
-                    appController.handleSearch(e.target.value);
-                }
-            });
-
-            elements.searchBtn.addEventListener("click", () => {
-                if (elements.input.value) {
-                    appController.handleSearch(elements.input.value);
-                }
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
             });
         });
     </script>
