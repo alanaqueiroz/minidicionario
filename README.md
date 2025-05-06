@@ -1,6 +1,6 @@
 # 📖 Minidicionario
 
-Este é um dicionário online que utiliza que permite incluir termos, seus significados e a matéria relacionada á ela. A aplicação permite realizar **consulta** por meio de uma barra de pesquisa; **leitura** atráves da lista que é formada pelas palavras incluídas; **atualização**, sendo possível editar palavras seus conceitos e a matéria relacionada; e **exclusão**, deletando palabras que não deseja mais na lista. 
+Este é um dicionário online que permite cadastrar termos, seus significados e a matéria a que estão relacionados. A aplicação oferece recursos como: consulta, por meio de uma barra de pesquisa; leitura, por meio de uma lista formada pelas palavras cadastradas; atualização, permitindo editar os termos, seus significados e a matéria correspondente; e exclusão, possibilitando remover palavras que não se deseja mais manter na lista.
 
 **EXTRA**: a página extra `Dicionário API` integra diferentes APIs para fornecer definições e traduções de palavras entre o inglês e o português. Quando o usuário faz uma consulta em português, o termo é traduzido para o inglês por meio da API MyMemory Translation. Em seguida, a palavra traduzida é enviada para a API DictionaryAPI.dev, que opera em inglês. O significado obtido é então traduzido de volta para o português e exibido ao usuário. É possível pesquisar termos em ambos os idiomas, recebendo definições claras em português. Quando a palavra original está em inglês, recursos adicionais são disponibilizados, como a pronúncia em áudio (quando disponível).
 
