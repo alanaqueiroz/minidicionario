@@ -4,7 +4,7 @@ Este é um dicionário online que permite cadastrar termos, seus significados e 
 
 **EXTRA**: a página extra `Dicionário API` integra diferentes APIs para fornecer definições e traduções de palavras entre o inglês e o português. Quando o usuário faz uma consulta em português, o termo é traduzido para o inglês por meio da API MyMemory Translation. Em seguida, a palavra traduzida é enviada para a API DictionaryAPI.dev, que opera em inglês. O significado obtido é então traduzido de volta para o português e exibido ao usuário. É possível pesquisar termos em ambos os idiomas, recebendo definições claras em português. Quando a palavra original está em inglês, recursos adicionais são disponibilizados, como a pronúncia em áudio (quando disponível).
 
-# 🛠️ Tecnologias
+## 🛠️ Tecnologias
 
 - PHP
 - HTML
@@ -19,7 +19,7 @@ Este é um dicionário online que permite cadastrar termos, seus significados e 
   - Endpoint: https://api.mymemory.translated.net/get?q={text}&langpair={source}|{target}
 
 
-# 🌐 Demostração
+## 🌐 Demostração
 
 Demonstração do projeto funcionando. Exibição da tabela com os dados do banco e permissões, logado como cliente:
 
@@ -28,7 +28,7 @@ Demonstração do projeto funcionando. Exibição da tabela com os dados do banc
 </p>
 
 
-# 📦 Estrutura do Projeto
+## 📦 Estrutura do Projeto
 
 Estrutura dos arquivos e explicação de suas funções:
 
@@ -39,7 +39,7 @@ minidicionario/
 └── index.php           # Arquivo principal com a estrutura de inserção de palavras
 ```
 
-# 🛢️ Modelagem de Dados
+## 🛢️ Modelagem de Dados
 
 Representação da estrutura de um sistema de vendas. Ele permite gerenciar usuários, pedidos e produtos, além de relacionar pedidos a produtos específicos.
 
@@ -97,7 +97,7 @@ CRUD `index.php`: Criar, alterar, deletar e listar
   - `DELETE FROM palavras WHERE id = ?`
 `
 
-## Acesso ao projeto
+## 🔗 Acesso ao projeto
 
 ### 1. Requisitos: 
 
