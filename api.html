@@ -55,6 +55,12 @@
         }
         .meaning-container {
             display:none;
+            margin-top: 20px;
+        }
+        .info-text {
+            display: none;
+            margin-top: 20px;
+            font-style: italic;
         }
         .instructions {
             font-size: 14px;
@@ -73,6 +79,7 @@
         <h1 class="heading">Dicionario API</h1>
         <input placeholder="Digite uma palavra para consultar" type="text" class="input" id="input" />
         <button class="search-btn" id="search-btn">Pesquisar</button>
+        <p class="info-text" id="info-text"></p>
         <p class="instructions">Obs: Não são todas as palavras que possuem áudio de pronúncia em inglês</p>
         <div class="meaning-container" id="meaning-container">
             <p>Palavra: <span class="title" id="title">____</span> <span class="translation" id="translation"></span></p>
@@ -144,7 +151,9 @@
                 },
                 
                 showError: message => {
+                    elements.infoText.style.display = "block";
                     elements.infoText.innerText = message;
+                    elements.meaningContainer.style.display = "none";
                 },
                 
                 showNotFound: word => {
@@ -211,6 +220,8 @@
             elements.searchBtn.addEventListener("click", () => {
                 if (elements.input.value) {
                     appController.handleSearch(elements.input.value);
+                } else {
+                    appController.showError("Por favor, digite uma palavra para pesquisar.");
                 }
             });
         });
