@@ -160,7 +160,7 @@
                     elements.meaningContainer.style.display = "block";
                     elements.infoText.style.display = "none";
                     elements.title.innerText = word;
-                    elements.meaning.innerText = "Palavra não encontrada";
+                    elements.meaning.innerText = "Palavra não encontrada no dicionário inglês";
                     elements.audio.style.display = "none";
                 },
                 
@@ -184,12 +184,11 @@
                         
                         const isEng = utils.isEnglish(word);
                         let searchWord = word;
+                        let translatedWord = word;
                         
-                        if (isEng) {
-                            const translated = await translationService.translate(word, 'en', 'pt');
-                            elements.translation.innerText = `(${translated})`;
-                        } else {
+                        if (!isEng) {
                             searchWord = await translationService.translate(word, 'pt', 'en');
+                            translatedWord = searchWord;
                         }
                         
                         const result = await dictionaryService.fetchDefinition(searchWord);
@@ -199,6 +198,11 @@
                         } else {
                             const definition = result[0].meanings[0].definitions[0].definition;
                             const translatedDefinition = await translationService.translate(definition, 'en', 'pt');
+                            
+                            if (!isEng) {
+                                elements.translation.innerText = `(em inglês: ${searchWord})`;
+                            }
+                            
                             const audioUrl = result[0].phonetics?.[0]?.audio;
                             
                             appController.showResult(word, translatedDefinition, isEng, audioUrl);
