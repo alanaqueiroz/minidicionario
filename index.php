@@ -213,7 +213,7 @@ try {
                 <i class="fas fa-book-open me-2"></i><strong>MiniDicionário</strong>
             </h1>
             <div class="api-btn-container">
-                <a href="api.php" class="btn btn-sm btn-outline-primary">
+                <a href="api.html" class="btn btn-sm btn-outline-primary">
                     <i class="fas fa-book me-1"></i>Dicionário API
                 </a>
             </div>
