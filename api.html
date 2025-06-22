@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dicionário API</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            justify-content: center; 
+            align-items: center;
+            background-color: rgb(37, 37, 37);
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .container {
+            background-color: rgba(255,255,255,.3);
+            padding: 28px;
+            border-radius: 7px;
+            box-shadow: 0 10px 10px rgba(0,0,0,.3);
+            width: 90%;
+            margin:10px;
+            max-width: 450px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .heading {
+            font-size:28px;
+        }
+        .input {
+            height:53px;
+            width:300px;
+            background-color: rgba(255,255,255,.6);
+            border-color:rgba(255,255,255,.4);
+            font-size: 16px;
+            padding: 0 42px;
+            border-radius:5px;
+            margin-bottom: 10px;
+        }
+        .search-btn {
+            height:53px;
+            width:390px;
+            background-color: rgba(0,0,0,.6);
+            color: white;
+            border: none;
+            font-size: 16px;
+            border-radius:5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-btn:hover {
+            background-color: rgba(0,0,0,.8);
+        }
+        .meaning-container {
+            display:none;
+        }
+        .instructions {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #333;
+        }
+        .translation {
+            font-size: 16px;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="heading">Dicionario API</h1>
+        <input placeholder="Digite uma palavra para consultar" type="text" class="input" id="input" />
+        <button class="search-btn" id="search-btn">Pesquisar</button>
+        <p class="instructions">Obs: Não são todas as palavras que possuem áudio de pronúncia em inglês</p>
+        <div class="meaning-container" id="meaning-container">
+            <p>Palavra: <span class="title" id="title">____</span> <span class="translation" id="translation"></span></p>
+            <p>Significado: <span class="meaning" id="meaning">____</span></p>
+            <audio src="" controls id="audio" style="display:none;"></audio>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos DOM
+            const elements = {
+                input: document.getElementById("input"),
+                infoText: document.getElementById("info-text"),
+                meaningContainer: document.getElementById("meaning-container"),
+                title: document.getElementById("title"),
+                meaning: document.getElementById("meaning"),
+                audio: document.getElementById("audio"),
+                translation: document.getElementById("translation"),
+                searchBtn: document.getElementById("search-btn")
+            };
+
+            // Funções utilitárias
+            const utils = {
+                removeHTMLTags: text => text.replace(/<[^>]*>?/gm, ''),
+                
+                isEnglish: word => {
+                    if (/[ãõâêîôûáéíóúàèìòùç]/i.test(word)) return false;
+                    return /^[a-zA-Z\-']+$/.test(word);
+                }
+            };
+
+            // Serviço de tradução
+            const translationService = {
+                translate: async (text, sourceLang, targetLang) => {
+                    try {
+                        const response = await fetch(
+                            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
+                        );
+                        const data = await response.json();
+                        return utils.removeHTMLTags(data.responseData.translatedText || text);
+                    } catch (error) {
+                        console.error("Translation error:", error);
+                        return text;
+                    }
+                }
+            };
+
+            // Serviço de dicionário
+            const dictionaryService = {
+                fetchDefinition: async word => {
+                    try {
+                        const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`;
+                        const response = await fetch(url);
+                        return await response.json();
+                    } catch (error) {
+                        throw new Error("Erro ao buscar definição");
+                    }
+                }
+            };
+
+            // Controlador principal
+            const appController = {
+                showLoading: word => {
+                    elements.infoText.style.display = "block";
+                    elements.meaningContainer.style.display = "none";
+                    elements.infoText.innerText = `Buscando o significado de "${word}"...`;
+                    elements.translation.innerText = "";
+                },
+                
+                showError: message => {
+                    elements.infoText.innerText = message;
+                },
+                
+                showNotFound: word => {
+                    elements.meaningContainer.style.display = "block";
+                    elements.infoText.style.display = "none";
+                    elements.title.innerText = word;
+                    elements.meaning.innerText = "Palavra não encontrada";
+                    elements.audio.style.display = "none";
+                },
+                
+                showResult: (word, definition, isEnglish, audioUrl) => {
+                    elements.infoText.style.display = "none";
+                    elements.meaningContainer.style.display = "block";
+                    elements.title.innerText = word;
+                    elements.meaning.innerText = definition;
+                    
+                    if (isEnglish && audioUrl) {
+                        elements.audio.src = audioUrl;
+                        elements.audio.style.display = "inline-flex";
+                    } else {
+                        elements.audio.style.display = "none";
+                    }
+                },
+                
+                handleSearch: async word => {
+                    try {
+                        appController.showLoading(word);
+                        
+                        const isEng = utils.isEnglish(word);
+                        let searchWord = word;
+                        
+                        if (isEng) {
+                            const translated = await translationService.translate(word, 'en', 'pt');
+                            elements.translation.innerText = `(${translated})`;
+                        } else {
+                            searchWord = await translationService.translate(word, 'pt', 'en');
+                        }
+                        
+                        const result = await dictionaryService.fetchDefinition(searchWord);
+
+                        if (result.title) {
+                            appController.showNotFound(word);
+                        } else {
+                            const definition = result[0].meanings[0].definitions[0].definition;
+                            const translatedDefinition = await translationService.translate(definition, 'en', 'pt');
+                            const audioUrl = result[0].phonetics?.[0]?.audio;
+                            
+                            appController.showResult(word, translatedDefinition, isEng, audioUrl);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        appController.showError("Ocorreu um erro. Tente novamente mais tarde.");
+                    }
+                }
+            };
+
+            // Event listeners
+            elements.input.addEventListener("keyup", e => {
+                if (e.target.value && e.key === "Enter") {
+                    appController.handleSearch(e.target.value);
+                }
+            });
+
+            elements.searchBtn.addEventListener("click", () => {
+                if (elements.input.value) {
+                    appController.handleSearch(elements.input.value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
